@@ -7,8 +7,9 @@ class MoviesController < ApplicationController
 
   def index
     session[:sort_by] = params[:sort_by] if params[:sort_by].present?
-    session[:ratings] = params[:ratings] if params[:commit] == 'Refresh'
-    @selected_ratings = session[:ratings] ? session[:ratings].keys : []
+    # session[:ratings] = params[:ratings] if params[:commit] == 'Refresh'
+    session[:ratings] = params[:ratings] if params[:ratings].present?
+    @selected_ratings = session[:ratings] ? session[:ratings].keys : Movie::RATINGS
     query_ratings = @selected_ratings.present? ? @selected_ratings : Movie::RATINGS
     @movies = Movie.where(rating: query_ratings).order(session[:sort_by])
   end
