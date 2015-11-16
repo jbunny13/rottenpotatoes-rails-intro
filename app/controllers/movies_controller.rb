@@ -1,17 +1,37 @@
 class MoviesController < ApplicationController
 
+  def movie_params
+    params.require(:movie).permit(:title, :rating, :description, :release_date)
+  end
+  
   def show
+    # retrieve movie ID from URI route
     id = params[:id]
+    # look up movie by unique ID
     @movie = Movie.find(id)
+    # will render app/views/movies/show.<extension> by default
   end
 
   def index
-    session[:sort_by] = params[:sort_by] if params[:sort_by].present?
-    # session[:ratings] = params[:ratings] if params[:commit] == 'Refresh'
     session[:ratings] = params[:ratings] if params[:ratings].present?
+    session[:sort_by] = params[:sort_by] if params[:sort_by].present?
+    
+    if params[:ratings] != session[:ratings] || params[:sort_by] != session[:sort_by]
+      flash.keep
+      redirect_to movies_path(ratings: session[:ratings], sort_by: session[:sort_by])
+    end
+
     @selected_ratings = session[:ratings] ? session[:ratings].keys : Movie::RATINGS
-    query_ratings = @selected_ratings.present? ? @selected_ratings : Movie::RATINGS
-    @movies = Movie.where(rating: query_ratings).order(session[:sort_by])
+    @movies = Movie.where(rating: @selected_ratings).order(session[:sort_by])
+    @hilite_title = 'hilite' if session[:sort_by] == 'title'
+    @hilite_release_date = 'hilite' if session[:sort_by] == 'release_date'
+
+    # session[:sort_by] = params[:sort_by] if params[:sort_by].present?
+    # # session[:ratings] = params[:ratings] if params[:commit] == 'Refresh'
+    # session[:ratings] = params[:ratings] if params[:ratings].present?
+    # @selected_ratings = session[:ratings] ? session[:ratings].keys : Movie::RATINGS
+    # query_ratings = @selected_ratings.present? ? @selected_ratings : Movie::RATINGS
+    # @movies = Movie.where(rating: query_ratings).order(session[:sort_by])
   end
   
   def new
@@ -51,9 +71,4 @@ class MoviesController < ApplicationController
     redirect_to movies_path
   end
 
-  private
-
-  def movie_params
-    params.require(:movie).permit(:title, :rating, :description, :release_date)
-  end
 end
